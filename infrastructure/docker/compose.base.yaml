@@ -1,0 +1,26 @@
+services:
+  auth-service:
+    build:
+      context: ./../../app/backend/auth-service
+    networks:
+      - flox-net
+    expose:
+      - 3000
+    restart: always
+    depends_on:
+      - auth-database
+
+  auth-database:
+    image: postgres:14.18
+    env_file: .env.common
+    networks:
+      - flox-net
+    expose:
+      - 5432
+    volumes:
+      - ./../../data/auth-database:/var/lib/postgresql/data
+    restart: always
+
+networks:
+  flox-net:
+    external: true

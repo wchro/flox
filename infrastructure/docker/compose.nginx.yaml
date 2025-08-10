@@ -1,0 +1,15 @@
+services:
+  gateway:
+    image: nginx
+    env_file: ./../nginx/.env
+    volumes:
+      - ./../nginx/templates:/etc/nginx/templates
+    networks:
+      - flox-net
+    ports:
+      - 8080:80
+    restart: always
+
+networks:
+  flox-net:
+    external: true
