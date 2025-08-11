@@ -4,7 +4,8 @@ import Fastify from "fastify";
 import fastifyPostgres from "@fastify/postgres";
 import type { FastifyRequest } from "fastify";
 import type { PoolClient } from "pg";
-import { hashPassword } from "./utils/hash.ts";
+import { comparePassword, hashPassword } from "./utils/hash.ts";
+import fastifyJwt from "@fastify/jwt";
 
 process.loadEnvFile(); // cargar variables de entorno
 const DB_URL = `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}`;
@@ -18,7 +19,14 @@ fastify.register(fastifyPostgres, {
   connectionString: DB_URL,
 });
 
+// plugin jwt
+fastify.register(fastifyJwt, {
+  secret: process.env.JWT_SECRET,
+});
+
 // esquemas
+// NOTA: registro y login ahora mismo son iguales
+// pero en el futuro pueden cambiar, se separan desde ya
 const registerBodySchema = {
   type: "object",
   required: ["username", "password"],
@@ -30,6 +38,21 @@ const registerBodySchema = {
 } as const;
 
 type RegisterBody = {
+  username: string;
+  password: string;
+};
+
+const loginBodySchema = {
+  type: "object",
+  required: ["username", "password"],
+  additionalProperties: false,
+  properties: {
+    username: { type: "string", minLength: 3, maxLength: 32 },
+    password: { type: "string", minLength: 8, maxLength: 128 },
+  },
+};
+
+type LoginBody = {
   username: string;
   password: string;
 };
@@ -81,6 +104,59 @@ fastify.post(
             message: "An unknown error occurred",
           });
       }
+    }
+  }
+);
+
+fastify.post(
+  "/login",
+  { schema: { body: loginBodySchema } },
+  async (req: FastifyRequest<{ Body: LoginBody }>, res) => {
+    try {
+      const { username, password } = req.body;
+
+      const user = await fastify.pg.transact(async (client: PoolClient) => {
+        const query = "SELECT * FROM auth WHERE username=$1";
+        const variables = [username];
+
+        const { rows } = await client.query(query, variables);
+
+        return rows[0];
+      });
+
+      if (!user)
+        return res.code(401).send({
+          success: false,
+          message: "Invalid username or password",
+        });
+
+      const isValidPassword = await comparePassword(password, user.password);
+
+      if (!isValidPassword)
+        return res.code(401).send({
+          success: false,
+          message: "Invalid username or password",
+        });
+
+      const accessToken = fastify.jwt.sign(
+        { sub: user.id },
+        { expiresIn: "7d" }
+      );
+
+      res.send({
+        success: true,
+        message: "Login successful",
+        data: {
+          id: user.id,
+          username: user.username,
+          accessToken,
+        },
+      });
+    } catch {
+      return res.code(500).send({
+        success: false,
+        message: "An unknown error occurred",
+      });
     }
   }
 );
