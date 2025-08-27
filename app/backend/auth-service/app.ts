@@ -6,12 +6,18 @@ import type { FastifyRequest } from "fastify";
 import type { PoolClient } from "pg";
 import { comparePassword, hashPassword } from "./utils/hash.ts";
 import fastifyJwt from "@fastify/jwt";
+import cors from "@fastify/cors";
 
 process.loadEnvFile(); // cargar variables de entorno
 const DB_URL = `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}`;
 
 const fastify = Fastify({
   logger: true,
+});
+
+// cors
+await fastify.register(cors, {
+  origin: process.env.FRONTEND_URL || "http://localhost:3000",
 });
 
 // plugin postgre

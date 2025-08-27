@@ -4,6 +4,7 @@
     "start": "npx tsx app.ts"
   },
   "dependencies": {
+    "@fastify/cors": "^11.1.0",
     "@fastify/jwt": "^9.1.0",
     "@fastify/postgres": "^6.0.2",
     "bcrypt": "^6.0.0",
