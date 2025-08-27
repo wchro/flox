@@ -88,10 +88,20 @@ fastify.post(
           message: "An unknown error occurred while creating the user",
         });
 
+      // generar token
+      const accessToken = fastify.jwt.sign(
+        { sub: user.id },
+        { expiresIn: "7d" }
+      );
+
       return res.code(201).send({
         success: true,
         message: "User successfully registered",
-        data: user,
+        data: {
+          id: user.id,
+          username: user.username,
+          accessToken,
+        },
       });
     } catch (error: any) {
       switch (error.code) {
