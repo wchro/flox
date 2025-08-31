@@ -7,6 +7,7 @@ import type { PoolClient } from "pg";
 import { comparePassword, hashPassword } from "./utils/hash.ts";
 import fastifyJwt from "@fastify/jwt";
 import cors from "@fastify/cors";
+import auth from "./plugins/auth.ts";
 
 process.loadEnvFile(); // cargar variables de entorno
 const DB_URL = `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}`;
@@ -25,10 +26,8 @@ fastify.register(fastifyPostgres, {
   connectionString: DB_URL,
 });
 
-// plugin jwt
-fastify.register(fastifyJwt, {
-  secret: process.env.JWT_SECRET,
-});
+// plugin jwt - auth
+await fastify.register(auth);
 
 // esquemas
 // NOTA: registro y login ahora mismo son iguales
@@ -56,7 +55,7 @@ const loginBodySchema = {
     username: { type: "string", minLength: 3, maxLength: 32 },
     password: { type: "string", minLength: 8, maxLength: 128 },
   },
-};
+} as const;
 
 type LoginBody = {
   username: string;
@@ -88,10 +87,15 @@ fastify.post(
           message: "An unknown error occurred while creating the user",
         });
 
-      // generar token
+      // generar tokens
       const accessToken = fastify.jwt.sign(
-        { sub: user.id },
-        { expiresIn: "7d" }
+        { sub: user.id, typ: "access" },
+        { expiresIn: "15m", iss: "auth-svc", aud: "external" }
+      );
+
+      const refreshToken = fastify.jwt.sign(
+        { sub: user.id, typ: "refresh" },
+        { expiresIn: "7d", iss: "auth-svc", aud: "external" }
       );
 
       return res.code(201).send({
@@ -101,6 +105,7 @@ fastify.post(
           id: user.id,
           username: user.username,
           accessToken,
+          refreshToken,
         },
       });
     } catch (error: any) {
@@ -155,8 +160,13 @@ fastify.post(
         });
 
       const accessToken = fastify.jwt.sign(
-        { sub: user.id },
-        { expiresIn: "7d" }
+        { sub: user.id, typ: "access" },
+        { expiresIn: "15m", iss: "auth-svc", aud: "external" }
+      );
+
+      const refreshToken = fastify.jwt.sign(
+        { sub: user.id, typ: "refresh" },
+        { expiresIn: "7d", iss: "auth-svc", aud: "external" }
       );
 
       res.send({
@@ -166,8 +176,41 @@ fastify.post(
           id: user.id,
           username: user.username,
           accessToken,
+          refreshToken,
         },
       });
+    } catch {
+      return res.code(500).send({
+        success: false,
+        message: "An unknown error occurred",
+      });
+    }
+  }
+);
+
+fastify.get(
+  "/refresh",
+  { onRequest: [fastify.authenticate] },
+  async (req: FastifyRequest, res) => {
+    try {
+      if (req.user.typ !== "refresh")
+        return res
+          .code(401)
+          .send({ success: false, message: "Invalid token type" });
+
+      // generar tokens nuevos
+      const accessToken = fastify.jwt.sign(
+        { sub: req.user.sub, typ: "access" },
+        { expiresIn: "15m", iss: "auth-svc", aud: "external" }
+      );
+
+      const refreshToken = fastify.jwt.sign(
+        { sub: req.user.sub, typ: "refresh" },
+        { expiresIn: "7d", iss: "auth-svc", aud: "external" }
+      );
+
+      // devolver tokens
+      res.send({ success: true, data: { accessToken, refreshToken } });
     } catch {
       return res.code(500).send({
         success: false,
