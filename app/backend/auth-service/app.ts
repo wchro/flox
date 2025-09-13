@@ -63,6 +63,8 @@ type LoginBody = {
 };
 
 // rutas
+
+// register endpoint
 fastify.post(
   "/register",
   { schema: { body: registerBodySchema } },
@@ -129,6 +131,7 @@ fastify.post(
   }
 );
 
+// login endpoint
 fastify.post(
   "/login",
   { schema: { body: loginBodySchema } },
@@ -188,6 +191,34 @@ fastify.post(
   }
 );
 
+// me endpoint
+fastify.get(
+  "/me",
+  { onRequest: [fastify.authenticate] },
+  async (req: FastifyRequest, res) => {
+    try {
+      const user = await fastify.pg.transact(async (client: PoolClient) => {
+        const query = `SELECT * FROM auth WHERE id=$1`;
+        const variables = [req.user.sub];
+
+        const { rows } = await client.query(query, variables);
+
+        return rows[0];
+      });
+      return res.send({
+        success: true,
+        data: { id: user.id, username: user.username },
+      });
+    } catch {
+      return res.code(500).send({
+        success: false,
+        message: "An unknown error occurred",
+      });
+    }
+  }
+);
+
+// refresh endpoint
 fastify.get(
   "/refresh",
   { onRequest: [fastify.authenticate] },
@@ -220,6 +251,7 @@ fastify.get(
   }
 );
 
+// health endpoint
 fastify.get("/health", () => ({ status: "OK" }));
 
 fastify.listen({ host: "0.0.0.0", port: process.env.PORT || 3000 });
