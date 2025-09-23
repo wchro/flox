@@ -1,7 +1,7 @@
 "use client";
 
-import { apiFetch } from "@/lib/apiClient";
-import { isExpired } from "@/lib/token";
+import { apiFetch } from "@/shared/lib/apiClient";
+import { isExpired } from "@/shared/lib/token";
 import { createContext, useContext, useEffect, useState } from "react";
 
 type User = {

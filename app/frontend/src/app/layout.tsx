@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { UserProvider } from "@/context/useAuth";
+import { UserProvider } from "@/features/auth/hooks/useAuth";
 import Header from "@/features/navigation";
 
 const InterFont = Inter({

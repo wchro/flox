@@ -9,10 +9,10 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/components/ui/dropdown-menu";
 
-import { useAuth } from "@/context/useAuth";
 import { DropdownMenuGroup } from "@radix-ui/react-dropdown-menu";
+import { useAuth } from "@/features/auth";
 
 export default function Header() {
   const { user, logout } = useAuth();

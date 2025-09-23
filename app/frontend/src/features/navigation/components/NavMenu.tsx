@@ -11,7 +11,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
+} from "@/shared/components/ui/navigation-menu";
 import { NAV_ITEMS } from "../constants/routes";
 
 export function NavMenu() {
