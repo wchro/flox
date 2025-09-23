@@ -8,9 +8,9 @@ import { comparePassword, hashPassword } from "./utils/hash.ts";
 import fastifyJwt from "@fastify/jwt";
 import cors from "@fastify/cors";
 import auth from "./plugins/auth.ts";
+import { env } from "./config/env.ts";
 
-process.loadEnvFile(); // cargar variables de entorno
-const DB_URL = `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}`;
+const DB_URL = `postgresql://${env.POSTGRES_USER}:${env.POSTGRES_PASSWORD}@${env.POSTGRES_HOST}:${env.POSTGRES_PORT}/${env.POSTGRES_DB}`;
 
 const fastify = Fastify({
   logger: true,
@@ -18,7 +18,7 @@ const fastify = Fastify({
 
 // cors
 await fastify.register(cors, {
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  origin: env.FRONTEND_URL || "http://localhost:3000",
 });
 
 // plugin postgre
@@ -254,7 +254,7 @@ fastify.get(
 // health endpoint
 fastify.get("/health", () => ({ status: "OK" }));
 
-fastify.listen({ host: "0.0.0.0", port: process.env.PORT || 3000 });
+fastify.listen({ host: "0.0.0.0", port: env.PORT || 3000 });
 
 // Apagado
 const shutdown = async () => {
