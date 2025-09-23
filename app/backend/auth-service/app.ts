@@ -1,14 +1,13 @@
 // TODO: Refactorizar y organizar bloques de codigo
 
 import Fastify from "fastify";
-import fastifyPostgres from "@fastify/postgres";
 import type { FastifyRequest } from "fastify";
 import type { PoolClient } from "pg";
 import { comparePassword, hashPassword } from "./utils/hash.ts";
-import fastifyJwt from "@fastify/jwt";
-import cors from "@fastify/cors";
 import auth from "./plugins/auth.ts";
 import { env } from "./config/env.ts";
+import pg from "./plugins/postgres.ts";
+import cors from "./plugins/cors.ts";
 
 const DB_URL = `postgresql://${env.POSTGRES_USER}:${env.POSTGRES_PASSWORD}@${env.POSTGRES_HOST}:${env.POSTGRES_PORT}/${env.POSTGRES_DB}`;
 
@@ -17,14 +16,10 @@ const fastify = Fastify({
 });
 
 // cors
-await fastify.register(cors, {
-  origin: env.FRONTEND_URL || "http://localhost:3000",
-});
+await fastify.register(cors);
 
 // plugin postgre
-fastify.register(fastifyPostgres, {
-  connectionString: DB_URL,
-});
+await fastify.register(pg);
 
 // plugin jwt - auth
 await fastify.register(auth);

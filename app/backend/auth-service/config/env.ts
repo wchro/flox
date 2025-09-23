@@ -16,3 +16,5 @@ export const env = {
   POSTGRES_PORT: Number(requireEnv("POSTGRES_PORT")),
   JWT_SECRET: requireEnv("JWT_SECRET"),
 };
+
+export const DB_URL = `postgresql://${env.POSTGRES_USER}:${env.POSTGRES_PASSWORD}@${env.POSTGRES_HOST}:${env.POSTGRES_PORT}/${env.POSTGRES_DB}`;
