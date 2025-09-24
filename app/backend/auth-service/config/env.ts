@@ -9,12 +9,18 @@ function requireEnv(name: string) {
 export const env = {
   PORT: Number(requireEnv("PORT")),
   FRONTEND_URL: requireEnv("FRONTEND_URL"),
-  POSTGRES_HOST: requireEnv("POSTGRES_HOST"),
-  POSTGRES_USER: requireEnv("POSTGRES_USER"),
-  POSTGRES_PASSWORD: requireEnv("POSTGRES_PASSWORD"),
-  POSTGRES_DB: requireEnv("POSTGRES_DB"),
-  POSTGRES_PORT: Number(requireEnv("POSTGRES_PORT")),
-  JWT_SECRET: requireEnv("JWT_SECRET"),
+  POSTGRES: {
+    HOST: requireEnv("POSTGRES_HOST"),
+    PORT: Number(requireEnv("POSTGRES_PORT")),
+    USER: requireEnv("POSTGRES_USER"),
+    PASSWORD: requireEnv("POSTGRES_PASSWORD"),
+    DATABASE: requireEnv("POSTGRES_DB"),
+  },
+  JWT: {
+    SECRET: requireEnv("JWT_SECRET"),
+    ACCESS_TTL: requireEnv("JWT_ACCESS_TTL"),
+    REFRESH_TTL: requireEnv("JWT_REFRESH_TTL"),
+  },
 };
 
-export const DB_URL = `postgresql://${env.POSTGRES_USER}:${env.POSTGRES_PASSWORD}@${env.POSTGRES_HOST}:${env.POSTGRES_PORT}/${env.POSTGRES_DB}`;
+export const DB_URL = `postgresql://${env.POSTGRES.USER}:${env.POSTGRES.PASSWORD}@${env.POSTGRES.HOST}:${env.POSTGRES.PORT}/${env.POSTGRES.DATABASE}`;
